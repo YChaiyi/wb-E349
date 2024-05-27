@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>垃圾分类系统投放记录</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background-color: #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 0 0 20px 20px;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            color: #007bff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 80px;
+            transition: all 0.3s ease;
+        }
+        .content:hover {
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            font-size: 24px;
+        }
+        .card {
+            margin-bottom: 20px;
+        }
+        .card-img-top {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            cursor: pointer;
+            position: relative;
+        }
+        .card-img-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2em;
+            color: white;
+            display: none;
+        }
+        .card-img-top:hover .card-img-overlay {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">加载中...</div>
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <a class="navbar-brand" href="#">垃圾分类系统</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="./disposal.html">投放</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="./disposal_history.html">投放记录</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <span class="navbar-text" id="userName"></span>
+                    <span class="navbar-text" id="educationId"></span>
+                    <span class="navbar-text" id="userPoints"></span>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./my.html"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-square" viewBox="0 0 16 16">
+                        <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                        <path d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1v-1c0-1-1-4-6-4s-6 3-6 4v1a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12z"/>
+                      </svg>我的</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="logoutLink">退出登录</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container content" id="recordContainer">
+        <div class="row">
+            <!-- 卡片将在这里动态生成 -->
+        </div>
+    </div>    
+
+    <!-- Modal for image preview -->
+    <div class="modal fade" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <img id="modalImage" src="" class="img-fluid" alt="Responsive image">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js"></script>
+    <script>
+        let wasteTypes = {};
+
+        function getCookie(name) {
+            let cookieArray = document.cookie.split(';');
+            for (let i = 0; i < cookieArray.length; i++) {
+                let cookiePair = cookieArray[i].split('=');
+                if (name == cookiePair[0].trim()) {
+                    return decodeURIComponent(cookiePair[1]);
+                }
+            }
+            return null;
+        }
+
+        function validateToken() {
+            let userToken = getCookie('wbe340usertoken');
+            if (!userToken) {
+                window.location.href = './index.html';
+                return;
+            }
+
+            $.ajax({
+                url: 'http://127.0.0.1:38920/validate_token',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ token: userToken, user_type: 'user' }),
+                success: function(response) {
+                    getUserInfo(userToken);
+                    fetchDisposalRecords(userToken);
+                },
+                error: function(xhr, status, error) {
+                    window.location.href = './index.html';
+                }
+            });
+        }
+
+        function getUserInfo(token) {
+            $.ajax({
+                url: 'http://127.0.0.1:38920/user_info',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ token: token }),
+                success: function(response) {
+                    $('#userName').text(response.name);
+                    $('#educationId').text('教育ID:' + response.educationid);
+                    $('#userPoints').text('积分:' + response.points);
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                },
+                error: function(xhr, status, error) {
+                    alert('获取用户信息失败,请重试。');
+                }
+            });
+        }
+
+        function fetchDisposalRecords(token) {
+            $.ajax({
+                url: 'http://127.0.0.1:38920/user_disposal_records',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ token: token }),
+                success: function(response) {
+                    displayRecords(response);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Failed to fetch records:', error);
+                }
+            });
+        }
+
+        function fetchDeviceLocations() {
+            return $.ajax({
+                url: 'http://127.0.0.1:38920/get_devices',
+                type: 'POST',
+                dataType: 'json'
+            }).then(function(response) {
+                let deviceLocations = {};
+                $.each(response, function(key, value) {
+                    deviceLocations[value.device_id] = value.describe;
+                });
+                return deviceLocations;
+            }).fail(function(xhr, status, error) {
+                console.error('Failed to fetch device locations:', error);
+                return {};
+            });
+        }
+
+        function fetchWasteTypes() {
+            return $.ajax({
+                url: 'http://127.0.0.1:38920/get_disposal_types',
+                type: 'POST',
+                dataType: 'json'
+            }).then(function(response) {
+                for (let key in response) {
+                    wasteTypes[response[key].device_id] = response[key].description;
+                }
+            }).fail(function(xhr, status, error) {
+                console.error('Failed to fetch waste types:', error);
+            });
+        }
+
+        function displayRecords(records) {
+            fetchDeviceLocations().then(function(deviceLocations) {
+                let sortedRecords = Object.keys(records).map(key => ({
+                    id: key,
+                    ...records[key],
+                    waste_type: wasteTypes[records[key].waste_type] || '未知类型',
+                    device_id: deviceLocations[records[key].device_id] || '未知位置',
+                    image_filename: `http://127.0.0.1:38920/uploads/${records[key].image_filename}`
+                })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        
+                let html = '<div class="row">'; // 开始行
+                sortedRecords.forEach(record => {
+                    html += `
+                        <div class="col-6 col-md-4 col-lg-3"> <!-- 栅格列，确保手机上至少一行两个 -->
+                            <div class="card">
+                                <div class="position-relative">
+                                    <img class="card-img-top" src="${record.image_filename}" alt="Waste Image" onclick="showImageModal('${record.image_filename}')">
+                                    <div class="card-img-overlay">
+                                        <i class="fas fa-search-plus"></i>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">记录 #${record.id}</h5>
+                                    <p class="card-text">投放时间: ${record.created_at}</p>
+                                    <p class="card-text">垃圾类型: ${record.waste_type}</p>
+                                    <p class="card-text">投放设备: ${record.device_id}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>'; // 结束行
+                document.getElementById('recordContainer').innerHTML = html;
+            });
+        }                  
+
+        function showImageModal(imageUrl) {
+            $('#modalImage').attr('src', imageUrl);
+            $('#imageModal').modal('show');
+        }
+
+        function logout() {
+            document.cookie = 'wbe340usertoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            window.location.href = './index.html';
+        }
+
+        window.onload = function() {
+            validateToken();
+            fetchWasteTypes();
+        };
+        document.getElementById('logoutLink').addEventListener('click', logout);
+    </script>
+</body>
+</html>

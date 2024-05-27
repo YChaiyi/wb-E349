@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员登录注册</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .card {
+            border-radius: 20px;
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2);
+        }
+        .card-header {
+            background-color: #fff;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+        }
+        .nav-link {
+            color: #007bff;
+        }
+        .nav-link.active {
+            color: #fff;
+            background-color: #007bff;
+        }
+        .form-control {
+            border-radius: 10px;
+        }
+        .btn-primary {
+            border-radius: 10px;
+        }
+        .system-title {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-overlay">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row justify-content-center align-items-center vh-100">
+            <div class="col-lg-4 col-md-6">
+                <h2 class="system-title">垃圾分类系统 管理员</h2>
+                <div class="card">
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs">
+                            <li class="nav-item">
+                                <a class="nav-link active" href="#login" data-bs-toggle="tab">登录</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#register" data-bs-toggle="tab">注册</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content">
+                            <div class="tab-pane fade show active" id="login">
+                                <form id="login-form">
+                                    <div class="mb-3">
+                                        <label for="login-facultyid" class="form-label">教职工ID</label>
+                                        <input type="text" class="form-control" id="login-facultyid" placeholder="请输入教职工ID" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="login-password" class="form-label">密码</label>
+                                        <input type="password" class="form-control" id="login-password" placeholder="请输入密码" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">登录</button>
+                                </form>
+                            </div>
+                            <div class="tab-pane fade" id="register">
+                                <form id="register-form">
+                                    <div class="mb-3">
+                                        <label for="register-facultyid" class="form-label">教职工ID</label>
+                                        <input type="text" class="form-control" id="register-facultyid" placeholder="请输入教职工ID" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="register-name" class="form-label">姓名</label>
+                                        <input type="text" class="form-control" id="register-name" placeholder="请输入姓名" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="register-password" class="form-label">密码</label>
+                                        <input type="password" class="form-control" id="register-password" placeholder="请输入密码" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">注册</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 未登录模态框 -->
+    <div class="modal fade" id="notLoginModal" tabindex="-1" aria-labelledby="notLoginModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="notLoginModalLabel">未登录</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    您还未登录,请先登录。
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 已登录模态框 -->
+    <div class="modal fade" id="alreadyLoginModal" tabindex="-1" aria-labelledby="alreadyLoginModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="alreadyLoginModalLabel">已登录</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    您已经登录,即将跳转到管理后台...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 注册成功模态框 -->
+    <div class="modal fade" id="registerSuccessModal" tabindex="-1" aria-labelledby="registerSuccessModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="registerSuccessModalLabel">注册成功</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    注册成功!请使用教职工ID和密码登录。
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 获取cookie的函数
+        function getCookie(name) {
+            let cookieArray = document.cookie.split(';'); // 将cookie切割成数组
+            for(let i = 0; i < cookieArray.length; i++) {
+                let cookiePair = cookieArray[i].split('='); // 将每个cookie切割成键值对
+                if(name == cookiePair[0].trim()) {
+                    return decodeURIComponent(cookiePair[1]); // 解码并返回cookie的值
+                }
+            }
+            return null; // 如果没有找到,返回null
+        }
+
+        // 页面加载完成后立即执行
+        window.onload = function() {
+            // 获取令牌
+            let token = getCookie('wbe340admintoken');
+
+            // 如果令牌存在,验证令牌有效性
+            if (token) {
+                fetch('http://127.0.0.1:38920/validate_token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_type: 'admin',
+                        token: token
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // 隐藏加载中页面
+                    document.getElementById('loading-overlay').style.display = 'none';
+
+                    if (data.message) {
+                        // 令牌有效,显示已登录模态框
+                        let alreadyLoginModal = new bootstrap.Modal(document.getElementById('alreadyLoginModal'));
+                        alreadyLoginModal.show();
+                        // 2秒后跳转到管理后台
+                        setTimeout(function() {
+                            window.location.href = './disposal_auditing.html';
+                        }, 2000);
+                    } else {
+                        // 令牌无效或过期,显示未登录模态框
+                        let notLoginModal = new bootstrap.Modal(document.getElementById('notLoginModal'));
+                        notLoginModal.show();
+                    }
+                })
+                .catch(error => {
+                    console.error('验证令牌请求出错:', error);
+                });
+            } else {
+                // 令牌不存在,隐藏加载中页面
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        };
+
+        document.getElementById('login-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            // 获取表单数据
+            var facultyid = document.getElementById('login-facultyid').value;
+            var password = document.getElementById('login-password').value;
+            // 发送登录请求
+            fetch('http://127.0.0.1:38920/admin_login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    facultyid: facultyid,
+                    password: password
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.token) {
+                    // 登录成功,保存JWT令牌到cookie
+                    document.cookie = 'wbe340admintoken=' + data.token + ';path=/';
+                    // 跳转到管理后台
+                    window.location.href = './disposal_auditing.html';
+                } else {
+                    // 登录失败,显示错误消息
+                    alert(data.error);
+                }
+            })
+            .catch(error => {
+                console.error('登录请求出错:', error);
+            });
+        });
+    
+        document.getElementById('register-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            // 获取表单数据
+            var facultyid = document.getElementById('register-facultyid').value;
+            var name = document.getElementById('register-name').value;
+            var password = document.getElementById('register-password').value;
+            // 发送注册请求
+            fetch('http://127.0.0.1:38920/admin_register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    facultyid: facultyid,
+                    name: name,
+                    password: password
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    // 注册成功,显示成功弹窗
+                    var registerSuccessModal = new bootstrap.Modal(document.getElementById('registerSuccessModal'));
+                    registerSuccessModal.show();
+                } else {
+                    // 注册失败,显示错误消息
+                    alert(data.error);
+                }
+            })
+            .catch(error => {
+                console.error('注册请求出错:', error);
+            });
+        });
+    </script>
+</body>
+</html>

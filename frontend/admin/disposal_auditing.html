@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>垃圾分类系统投放记录</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background-color: #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 0 0 20px 20px;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            color: #007bff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 80px;
+            transition: all 0.3s ease;
+        }
+        .content:hover {
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">加载中...</div>
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <a class="navbar-brand" href="#">垃圾分类系统管理端</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="./disposal_auditing.html">投放记录</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./disposal_device_manage.html">投放设备管理</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./disposal_type_manage.html">投放类别</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./user_manage.html">用户管理</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <span class="navbar-text" id="userName"></span>
+                    <span class="navbar-text" id="facultyId"></span>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./my.html"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                            fill="currentColor" class="bi bi-person-square" viewBox="0 0 16 16">
+                            <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
+                            <path
+                                d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1v-1c0-1-1-4-6-4s-6 3-6 4v1a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12z" />
+                        </svg>我的</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="logoutLink">退出登录</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container content">
+        <div class="row mb-3">
+            <div class="col">
+                <input type="text" class="form-control" id="searchTime" placeholder="投放时间 (格式: 2024-05-26 00:37:47)">
+            </div>
+            <div class="col">
+                <input type="text" class="form-control" id="searchName" placeholder="姓名">
+            </div>
+            <div class="col">
+                <input type="text" class="form-control" id="searchRecordId" placeholder="记录ID">
+            </div>
+            <div class="col">
+                <input type="text" class="form-control" id="searchEducationId" placeholder="学号">
+            </div>
+            <div class="col">
+                <input type="text" class="form-control" id="searchWasteType" placeholder="垃圾类型">
+            </div>
+            <div class="col">
+                <input type="text" class="form-control" id="searchDeviceId" placeholder="投放设备">
+            </div>
+            <div class="col">
+                <button class="btn btn-primary" onclick="filterRecords()">搜索</button>
+            </div>
+        </div>
+        <table class="table table-striped" id="recordTable">
+            <thead>
+                <tr>
+                    <th>记录ID</th>
+                    <th>投放时间</th>
+                    <th>姓名</th>
+                    <th>学号</th>
+                    <th>垃圾类型</th>
+                    <th>投放设备</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>      
+
+    <!-- Modal for image preview -->
+    <div class="modal fade" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <img id="modalImage" src="" class="img-fluid" alt="Responsive image">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js"></script>
+    <script>
+        function getCookie(name) {
+            let cookieArray = document.cookie.split(';');
+            for (let i = 0; i < cookieArray.length; i++) {
+                let cookiePair = cookieArray[i].split('=');
+                if (name == cookiePair[0].trim()) {
+                    return decodeURIComponent(cookiePair[1]);
+                }
+            }
+            return null;
+        }
+
+        function validateToken() {
+            let userToken = getCookie('wbe340admintoken');
+            if (!userToken) {
+                window.location.href = './index.html';
+                return;
+            }
+
+            $.ajax({
+                url: 'http://127.0.0.1:38920/validate_token',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ token: userToken, user_type: 'admin' }),
+                success: function(response) {
+                    getUserInfo(userToken);
+                    fetchDisposalRecords(userToken);
+                },
+                error: function(xhr, status, error) {
+                    window.location.href = './index.html';
+                }
+            });
+        }
+
+        function getUserInfo(token) {
+            $.ajax({
+                url: 'http://127.0.0.1:38920/admin_info',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ token: token }),
+                success: function(response) {
+                    $('#userName').text(response.name);
+                    $('#facultyId').text('教职工ID:' + response.facultyid);
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                },
+                error: function(xhr, status, error) {
+                    alert('获取用户信息失败,请重试。');
+                }
+            });
+        }
+
+        function fetchDisposalRecords(token) {
+            $.ajax({
+                url: 'http://127.0.0.1:38920/admin_disposal_records',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ token: token }),
+                success: function(response) {
+                    displayRecords(response);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Failed to fetch records:', error);
+                }
+            });            
+        }
+
+        function fetchDeviceLocations() {
+            return $.ajax({
+                url: 'http://127.0.0.1:38920/get_devices',
+                type: 'POST',
+                dataType: 'json'
+            }).then(function(response) {
+                let deviceLocations = {};
+                $.each(response, function(key, value) {
+                    deviceLocations[value.device_id] = value.describe;
+                });
+                return deviceLocations;
+            }).fail(function(xhr, status, error) {
+                console.error('Failed to fetch device locations:', error);
+                return {};
+            });
+        }
+        
+        let allRecords = [];
+
+        function displayRecords(records) {
+            fetchDeviceLocations().then(function(deviceLocations) {
+                allRecords = Object.keys(records).map(key => ({
+                    id: key,
+                    ...records[key],
+                    waste_type: {
+                        '1': '可回收垃圾',
+                        '2': '不可回收垃圾',
+                        '3': '有害垃圾',
+                        '4': '其他垃圾'
+                    }[records[key].waste_type],
+                    device_id: deviceLocations[records[key].device_id] || '未知位置',
+                    image_filename: `http://127.0.0.1:38920/uploads/${records[key].image_filename}`
+                })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                
+                renderRecords(allRecords);
+            });
+        }
+
+        function renderRecords(records) {
+            let html = '';
+            records.forEach(record => {
+                html += `
+                    <tr>
+                        <td>${record.id}</td>
+                        <td>${record.created_at}</td>
+                        <td>${record.name}</td>
+                        <td>${record.educationid}</td>
+                        <td>${record.waste_type}</td>
+                        <td>${record.device_id}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="showImageModal('${record.image_filename}')">查看图片</button>
+                            <button class="btn btn-success btn-sm" onclick="addPoint('${record.id}', '${record.user_uuid}')" ${record.point_status === 'true' ? 'disabled' : ''}>${record.point_status === 'true' ? '已加分' : '加分'}</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            $('#recordTable tbody').html(html);
+        }
+
+        function filterRecords() {
+            let searchName = $('#searchName').val().toLowerCase();
+            let searchRecordId = $('#searchRecordId').val().toLowerCase();
+            let searchEducationId = $('#searchEducationId').val().toLowerCase();
+            let searchWasteType = $('#searchWasteType').val().toLowerCase();
+            let searchDeviceId = $('#searchDeviceId').val().toLowerCase();
+            let searchTime = $('#searchTime').val().toLowerCase();
+
+            let filteredRecords = allRecords.filter(record => {
+                let recordTime = record.created_at.toLowerCase();
+                return (searchName === '' || record.name.toLowerCase().includes(searchName)) &&
+                    (searchRecordId === '' || record.id.toLowerCase().includes(searchRecordId)) &&
+                    (searchEducationId === '' || record.educationid.toLowerCase().includes(searchEducationId)) &&
+                    (searchWasteType === '' || record.waste_type.toLowerCase().includes(searchWasteType)) &&
+                    (searchDeviceId === '' || record.device_id.toLowerCase().includes(searchDeviceId)) &&
+                    (searchTime === '' || recordTime.startsWith(searchTime));
+            });
+
+            renderRecords(filteredRecords);
+        }
+
+        function showImageModal(imageUrl) {
+            $('#modalImage').attr('src', imageUrl);
+            $('#imageModal').modal('show');
+        }
+
+        function addPoint(recordId, userUuid) {
+            let userToken = getCookie('wbe340admintoken');
+            $.ajax({
+                url: 'http://127.0.0.1:38920/update_points',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ token: userToken, disposal_record_id: recordId }),
+                success: function(response) {
+                    alert('加分成功');
+                    location.reload(); // 刷新页面
+                },
+                error: function(xhr, status, error) {
+                    alert('加分失败，请重试');
+                }
+            });
+        }     
+
+        function logout() {
+            document.cookie = 'wbe340admintoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            window.location.href = './index.html';
+        }
+
+        window.onload = validateToken;
+        document.getElementById('logoutLink').addEventListener('click', logout);
+    </script>
+</body>
+</html>

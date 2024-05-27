@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>垃圾分类系统投放</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .navbar {
+            background-color: #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 0 0 20px 20px;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: #007bff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 80px;  /* 增加这一行 */
+            transition: all 0.3s ease;
+        }
+
+        .content:hover {
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            font-size: 24px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="loading-overlay" id="loadingOverlay">加载中...</div>
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <a class="navbar-brand" href="#">垃圾分类系统</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="./disposal.html">投放</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./disposal_history.html">投放记录</a>
+                </li>
+            </ul>
+            <br>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <span class="navbar-text" id="userName"></span>
+                    <span class="navbar-text" id="educationId"></span>
+                    <span class="navbar-text" id="userPoints"></span>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./my.html"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                            fill="currentColor" class="bi bi-person-square" viewBox="0 0 16 16">
+                            <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
+                            <path
+                                d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1v-1c0-1-1-4-6-4s-6 3-6 4v1a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12z" />
+                        </svg>我的</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="logoutLink">退出登录</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container content">
+        <h3>投放垃圾</h3>
+        <form id="disposalForm">
+            <div class="form-group">
+                <label for="imageInput">选择垃圾图片</label>
+                <input type="file" class="form-control-file" id="imageInput" accept="image/*" required>
+            </div>
+            <div class="form-group">
+                <label for="wasteTypeSelect">选择垃圾类型</label>
+                <select class="form-control" id="wasteTypeSelect" required>
+                    <option value="">请选择</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="deviceSelect">选择投放设备</label>
+                <select class="form-control" id="deviceSelect" required>
+                    <option value="">请选择</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">提交</button>
+        </form>
+    </div>
+
+    <!-- 模态框 -->
+    <div class="modal fade" id="resultModal" tabindex="-1" role="dialog" aria-labelledby="resultModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="resultModalLabel">投放结果</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="resultModalBody">
+                    <!-- 响应结果内容 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js"></script>
+    <script>
+        function getCookie(name) {
+            let cookieArray = document.cookie.split(';');
+            for (let i = 0; i < cookieArray.length; i++) {
+                let cookiePair = cookieArray[i].split('=');
+                if (name == cookiePair[0].trim()) {
+                    return decodeURIComponent(cookiePair[1]);
+                }
+            }
+            return null;
+        }
+    
+        function fetchDevices() {
+            $.ajax({
+                url: 'http://127.0.0.1:38920/get_devices',
+                type: 'POST',
+                success: function(response) {
+                    let deviceSelect = document.getElementById('deviceSelect');
+                    deviceSelect.innerHTML = '<option value="">请选择</option>'; // 清空当前选项
+                    for (let key in response) {
+                        let option = new Option(response[key].describe, response[key].device_id);
+                        deviceSelect.options.add(option);
+                    }
+                },
+                error: function() {
+                    alert('无法加载设备列表');
+                }
+            });
+        }
+        
+        function fetchDisposalTypes() {
+            $.ajax({
+                url: 'http://127.0.0.1:38920/get_disposal_types',
+                type: 'POST',
+                success: function(response) {
+                    let wasteTypeSelect = document.getElementById('wasteTypeSelect');
+                    wasteTypeSelect.innerHTML = '<option value="">请选择</option>'; // 清空当前选项
+                    for (let key in response) {
+                        let option = new Option(response[key].description, response[key].device_id);
+                        wasteTypeSelect.options.add(option);
+                    }
+                },
+                error: function() {
+                    alert('无法加载垃圾类型列表');
+                }
+            });
+        }
+    
+        function validateToken() {
+            let userToken = getCookie('wbe340usertoken');
+            if (!userToken) {
+                window.location.href = './index.html';
+                return;
+            }
+    
+            $.ajax({
+                url: 'http://127.0.0.1:38920/validate_token',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ token: userToken, user_type: 'user' }),
+                success: function(response) {
+                    getUserInfo(userToken);
+                    fetchDevices(); // 在验证令牌成功后获取设备列表
+                    fetchDisposalTypes(); // 在验证令牌成功后获取垃圾类型列表
+                },
+                error: function(xhr, status, error) {
+                    window.location.href = './index.html';
+                }
+            });
+        }
+
+        function getUserInfo(token) {
+            $.ajax({
+                url: 'http://127.0.0.1:38920/user_info',
+                type: 'POST',
+                contentType: 'application/json',  
+                data: JSON.stringify({ token: token }),
+                success: function(response) {
+                    $('#userName').text(response.name);
+                    $('#educationId').text('教育ID:' + response.educationid);
+                    $('#userPoints').text('积分:' + response.points);
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                },
+                error: function(xhr, status, error) {
+                    alert('获取用户信息失败,请重试。');
+                }
+            });
+        }
+        
+        function logout() {
+            document.cookie = 'wbe340usertoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            window.location.href = './index.html';
+        }
+        
+        function submitDisposal(e) {
+            e.preventDefault();
+            let imageInput = document.getElementById('imageInput');
+            let wasteTypeSelect = document.getElementById('wasteTypeSelect');
+            let deviceSelect = document.getElementById('deviceSelect');
+
+            if (!imageInput.files[0]) {
+                alert('请选择垃圾图片');
+                return;
+            }
+
+            if (!wasteTypeSelect.value) {
+                alert('请选择垃圾类型');
+                return;
+            }
+
+            if (!deviceSelect.value) {
+                alert('请选择投放设备');
+                return;
+            }
+
+            let reader = new FileReader();
+            reader.onloadend = function() {
+                let base64Image = reader.result.split(',')[1];
+                
+                let data = {
+                    token: getCookie('wbe340usertoken'),
+                    device_id: deviceSelect.value,
+                    waste_type: wasteTypeSelect.value,
+                    image_base64: base64Image
+                };
+
+                $.ajax({
+                    url: 'http://127.0.0.1:38920/disposal_record',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function(response) {
+                        $('#resultModalBody').text(response.message);
+                        $('#resultModal').modal('show');
+                    },
+                    error: function(xhr, status, error) {
+                        alert('提交失败,请重试。');
+                    }
+                });
+            }
+            reader.readAsDataURL(imageInput.files[0]);
+        }
+        
+        window.onload = validateToken; // 确保在加载页面时调用validateToken
+        document.getElementById('logoutLink').addEventListener('click', logout);
+        document.getElementById('disposalForm').addEventListener('submit', submitDisposal);
+    </script>
+</body>
+
+</html>

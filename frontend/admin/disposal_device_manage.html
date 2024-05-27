@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>垃圾分类系统投放设备管理</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .navbar {
+            background-color: #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 0 0 20px 20px;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: #007bff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 80px;
+            transition: all 0.3s ease;
+        }
+
+        .content:hover {
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            font-size: 24px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="loading-overlay" id="loadingOverlay">加载中...</div>
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <a class="navbar-brand" href="#">垃圾分类系统管理端</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="./disposal_auditing.html">投放记录</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="./disposal_device_manage.html">投放设备管理</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./disposal_type_manage.html">投放类别</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./user_manage.html">用户管理</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <span class="navbar-text" id="userName"></span>
+                    <span class="navbar-text" id="facultyId"></span>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./my.html"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                            fill="currentColor" class="bi bi-person-square" viewBox="0 0 16 16">
+                            <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
+                            <path
+                                d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1v-1c0-1-1-4-6-4s-6 3-6 4v1a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12z" />
+                        </svg>我的</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="logoutLink">退出登录</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container content">
+        <h2>投放设备管理</h2>
+        <button class="btn btn-primary mb-3" id="addDeviceBtn">新建设备</button>
+        <table class="table table-striped" id="deviceTable">
+            <thead>
+                <tr>
+                    <th>设备ID</th>
+                    <th>设备描述</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 新建设备模态框 -->
+    <div class="modal fade" id="addDeviceModal" tabindex="-1" role="dialog" aria-labelledby="addDeviceModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addDeviceModalLabel">新建设备</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="deviceDescription">设备描述</label>
+                            <input type="text" class="form-control" id="deviceDescription" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveDeviceBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改设备描述模态框 -->
+    <div class="modal fade" id="editDeviceModal" tabindex="-1" role="dialog" aria-labelledby="editDeviceModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editDeviceModalLabel">修改设备描述</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="editDeviceDescription">设备描述</label>
+                            <input type="text" class="form-control" id="editDeviceDescription" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="updateDeviceBtn">更新</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js"></script>
+    <script>
+        function getCookie(name) {
+            let cookieArray = document.cookie.split(';');
+            for (let i = 0; i < cookieArray.length; i++) {
+                let cookiePair = cookieArray[i].split('=');
+                if (name == cookiePair[0].trim()) {
+                    return decodeURIComponent(cookiePair[1]);
+                }
+            }
+            return null;
+        }
+
+        function validateToken() {
+            let userToken = getCookie('wbe340admintoken');
+            if (!userToken) {
+                window.location.href = './index.html';
+                return;
+            }
+
+            $.ajax({
+                url: 'http://127.0.0.1:38920/validate_token',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ token: userToken, user_type: 'admin' }),
+                success: function (response) {
+                    getUserInfo(userToken);
+                    fetchDeviceLocations();
+                },
+                error: function (xhr, status, error) {
+                    window.location.href = './index.html';
+                }
+            });
+        }
+
+        function getUserInfo(token) {
+            $.ajax({
+                url: 'http://127.0.0.1:38920/admin_info',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ token: token }),
+                success: function (response) {
+                    $('#userName').text(response.name);
+                    $('#facultyId').text('教职工ID:' + response.facultyid);
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                },
+                error: function (xhr, status, error) {
+                    alert('获取用户信息失败,请重试。');
+                }
+            });
+        }
+
+        let selectedDeviceId = null;
+
+        function fetchDeviceLocations() {
+            return $.ajax({
+                url: 'http://127.0.0.1:38920/get_devices',
+                type: 'POST',
+                dataType: 'json'
+            }).then(function (response) {
+                let deviceLocations = Object.values(response).map(device => ({
+                    id: device.device_id,
+                    description: device.describe
+                }));
+                displayDevices(deviceLocations);
+            }).fail(function (xhr, status, error) {
+                console.error('Failed to fetch device locations:', error);
+            });
+        }
+
+        function displayDevices(devices) {
+            let html = '';
+            devices.forEach(device => {
+                html += `
+                    <tr>
+                        <td>${device.id}</td>
+                        <td>${device.description}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary editDeviceBtn" data-id="${device.id}">修改</button>
+                            <button class="btn btn-sm btn-danger deleteDeviceBtn" data-id="${device.id}">删除</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            $('#deviceTable tbody').html(html);
+        }
+
+        function addDevice() {
+            let description = $('#deviceDescription').val();
+            if (!description) {
+                alert('请输入设备描述');
+                return;
+            }
+
+            let userToken = getCookie('wbe340admintoken');
+            $.ajax({
+                url: 'http://127.0.0.1:38920/manage_device',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    token: userToken,
+                    action: 'add',
+                    description: description
+                }),
+                success: function (response) {
+                    $('#addDeviceModal').modal('hide');
+                    $('#deviceDescription').val('');
+                    fetchDeviceLocations();
+                },
+                error: function (xhr, status, error) {
+                    alert('新建设备失败,请重试。');
+                }
+            });
+        }
+
+        function deleteDevice(deviceId) {
+            if (!confirm('确定要删除该设备吗?')) {
+                return;
+            }
+
+            let userToken = getCookie('wbe340admintoken');
+            $.ajax({
+                url: 'http://127.0.0.1:38920/manage_device',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    token: userToken,
+                    action: 'delete',
+                    device_id: deviceId
+                }),
+                success: function (response) {
+                    fetchDeviceLocations();
+                },
+                error: function (xhr, status, error) {
+                    alert('删除设备失败,请重试。');
+                }
+            });
+        }
+
+        function updateDevice() {
+            let description = $('#editDeviceDescription').val();
+            if (!description) {
+                alert('请输入设备描述');
+                return;
+            }
+
+            let userToken = getCookie('wbe340admintoken');
+            $.ajax({
+                url: 'http://127.0.0.1:38920/manage_device',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    token: userToken,
+                    action: 'update',
+                    device_id: selectedDeviceId,
+                    description: description
+                }),
+                success: function (response) {
+                    $('#editDeviceModal').modal('hide');
+                    fetchDeviceLocations();
+                },
+                error: function (xhr, status, error) {
+                    alert('修改设备描述失败,请重试。');
+                }
+            });
+        }
+
+        $(document).on('click', '.editDeviceBtn', function () {
+            selectedDeviceId = $(this).data('id');
+            let description = $(this).closest('tr').find('td:eq(1)').text();
+            $('#editDeviceDescription').val(description);
+            $('#editDeviceModal').modal('show');
+        });
+
+        $(document).on('click', '.deleteDeviceBtn', function () {
+            let deviceId = $(this).data('id');
+            deleteDevice(deviceId);
+        });
+
+        $('#addDeviceBtn').on('click', function () {
+            $('#addDeviceModal').modal('show');
+        });
+
+        $('#saveDeviceBtn').on('click', addDevice);
+        $('#updateDeviceBtn').on('click', updateDevice);
+
+        function logout() {
+            document.cookie = 'wbe340admintoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            window.location.href = './index.html';
+        }
+
+        window.onload = validateToken;
+        document.getElementById('logoutLink').addEventListener('click', logout);
+    </script>
+</body>
+
+</html>
