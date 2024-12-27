@@ -135,6 +135,4 @@ wb_E340
 
 # 交流
 
-欢迎扫码添加我的微信，商单可接，校园单可接。个人全栈开发，App、API、网站、小程序、算法均可做。
-
-![haiyi](https://yicheng.bj.cn/upload/IMG_5905.JPG)
+欢迎添加我的微信haiyi-three(商单可接，学校设计单可接。个人全栈开发，App、API、网站、小程序、算法均可做。
